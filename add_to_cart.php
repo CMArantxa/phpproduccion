@@ -19,4 +19,6 @@ if(isset($_GET["idproduct"])){
     $_SESSION["cart"]=$cart;
 }
 }
+header("Location: ./");
+exit();
 ?>

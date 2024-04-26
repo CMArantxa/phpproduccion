@@ -1,7 +1,6 @@
 <?php
 require_once("conexion.php");
-session_start();
-$_SESSION["temporal_user"]=1;
+
 $sql = "select * from product";
 $consulta = $conn->prepare($sql);
 // Ejecutar la consulta
@@ -25,6 +24,32 @@ $resultados = $consulta->fetchAll(PDO::FETCH_ASSOC);
 </head>
 
 <body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" href="#">Mi Tienda</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Inicio</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Productos</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Contacto</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="fas fa-shopping-cart"></i> Carrito</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
     <div class="container contenedor-productos row">
     <h3>Productos</h3>
 
@@ -45,15 +70,17 @@ $resultados = $consulta->fetchAll(PDO::FETCH_ASSOC);
           </div>
           <form action="add_to_cart.php" method="get">
           <div class="add-to-cart">
-          <input type="hidden" name="idproduct" value="'.$product^["idproduct"].'">
-            <input min=1 step=1 class="form-control" type="number" name="quantity" id="" required>
-           <button type="submit" class="btn btn-primary"><i class="fa-solid fa-cart-plus"></i></button>
+            <input type="hidden" name="idproduct" value="'.$product["idproduct"].'">
+            <input min=1 step=1 class="form-control" type="number" name="quantity" id="" required >
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-cart-plus"></i></button>
           </div>
+          </form>
         </div>
       </div>';
     }
     ?>
      </div>
+
     
     <!-- Optional JavaScript; choose one of the two! -->
 
