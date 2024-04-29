@@ -1,23 +1,37 @@
 <?php
+include_once("./models/product.php");
 session_start();
-require_once("conexion.php");
+if(isset($_SESSION["username"])){
+    $user=$_SESSION["username"];
+if(isset($_SESSION["cart"])){
+    //existe usuario y carrito en sesion
+    $user=$_SESSION["username"];
+    $cart=$_SESSION["cart"];
+    //consultamos informacion a bbdd
+    require_once("conexion.php");
+    foreach ($cart as $product) {
+        $sql="select * from product where idproduct=?";
+        $stm=$conn->prepare($sql);
+        $stm->bindParam(1,$product->idproduct);
+        $stm->execute();
+        if($stm->rowCount()>0){
+            $result=$stm->fetchAll(PDO::FETCH_ASSOC);
+            $product->name=$result[0]["name"];
+            $product->description=$result[0]["description"];
+            $product->price=$result[0]["price"];
+            $product->image=$result[0]["image"];
 
-$sql = "select * from product";
-$consulta = $conn->prepare($sql);
-// Ejecutar la consulta
-$consulta->execute();
-// Obtener los resultados
-$resultados = $consulta->fetchAll(PDO::FETCH_ASSOC);
-//Compruebo si hay carrito
-if (isset($_SESSION["username"])) {
-    //comprobaria si hay carrito en la bbdd
-    $username=$_SESSION["username"];
-}
-    //compruebo si hay carrito en sesion
-    if (isset($_SESSION["cart"])) {
-        $cart = $_SESSION["cart"];
+        }
+        # code...
     }
-
+}else{
+    header("Location:./");
+    exit();
+}
+}else{
+    header("Location:./");
+    exit();
+}
 ?>
 <!doctype html>
 <html lang="en">
@@ -67,61 +81,47 @@ if (isset($_SESSION["username"])) {
             <a class="nav-link" href="cart.php"><span><i class="fas fa-shopping-cart"></i><?php echo isset($cart) ? count($cart) : ''; ?> </span></a>
 
         </div>
-        <h3>Productos</h3>
-
-        <?php
-        // Mostrar los resultados
-        foreach ($resultados as $product) {
-            echo '<div class="card productcard col-md-3 col-sm-12" ">
-        <img src="assets/product/' . $product["image"] . '" class="card-img-top" alt="...">
-        <div class="card-body">
-        <div class="producto-detalle">
-            <div>  
-                <h5 class="card-title">' . $product["name"] . '</h5>
-                <p class="card-text">' . $product["description"] . '</p>
-            </div>
-            <div>
-                <h5 class="card-title">' . $product["price"] . '€/kg</h5>
-            </div>
-          </div>
-          <form action="add_to_cart.php" method="get">
-          <div class="add-to-cart">
-            <input type="hidden" name="idproduct" value="' . $product["idproduct"] . '">
-            <input min=1 step=1 class="form-control" type="number" name="quantity" id="" required >
-            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-cart-plus"></i></button>
-          </div>
-          </form>
-        </div>
-      </div>';
-        }
-        ?>
-    </div>
-<div class="modal"  id="modal-login" tabindex="-1" role="dialog">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Login</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <form action="login.php" method="post">
-      <div class="modal-body">
-        <h5>Para continuar comprando hay que iniciar sesión</h5>
-            <hr>
-           
-            <input class="form-control email" type="email" name="email" id="" placeholder="email" required>
-            <input class="form-control" type="password" name="password" id="" placeholder="password" required>
-  
-      </div>
-      <div class="modal-footer">
-        <button type="submit" class="btn btn-primary">Log in</button>
-        <button type="submit" class="btn btn-secondary" data-dismiss="modal">Close</button>
-      </div>
-      </form>
-    </div>
-  </div>
+        <h3>Carrito</h3>
+        <div class="table-responsive">
+  <table class="table">
+  <thead>
+    <tr>
+      <th scope="col">ID</th>
+      <th scope="col">Imagen</th>
+      <th scope="col">Product</th>
+      <th scope="col">Quantity</th>
+      <th scope="col">price</th>
+      <th scope="col">Total</th>
+      <th scope="col">Borrar</th>
+    </tr>
+  </thead>
+  <tbody>
+   <?php
+   $total=0;
+   foreach ($cart as $key => $product) {
+    $total+=$product->price*$product->quantity;
+   echo ' <tr>
+   <th scope="row">'.$key.'</th>
+   <td><img class="img-cart" src="assets/product/'.$product->image.'" alt=""></td>
+   <td><h6>'.$product->name.'</h6><p>'.$product->description.'</p></td>
+   <td><input type="number" name="" id="" value="'.$product->quantity.'"></td>
+   <td>'.$product->price.'</td>
+   <td>'.$product->price*$product->quantity.'</td>
+   <td>x</td>
+ </tr>';# code...
+   }
+   echo "<tr>
+   <td>Total</td><td>".$total."</td>
+   </tr>"
+   ?>
+   
+  </tbody>
+</table>
+  </table>
 </div>
+       
+    </div>
+
 
     <!-- Optional JavaScript; choose one of the two! -->
 

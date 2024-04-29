@@ -17,3 +17,12 @@
 .contenedor-productos{
     margin: 0 auto;
 }
+.email{
+    margin-bottom: 8px;
+}
+#user{
+    color: aqua;
+}
+.img-cart{
+    width: 100px;
+}
