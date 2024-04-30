@@ -26,3 +26,11 @@
 .img-cart{
     width: 100px;
 }
+.importe{
+font-weight: bold;
+text-align: right;
+}
+.euros{
+    font-weight: bold;
+    text-align: right;
+}

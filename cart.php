@@ -52,7 +52,7 @@ if(isset($_SESSION["cart"])){
 
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
-            <a class="navbar-brand" href="#">Mi Tienda</a>
+            <a class="navbar-brand" href="cart.php">Mi Tienda</a>
             <div>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
@@ -90,7 +90,7 @@ if(isset($_SESSION["cart"])){
       <th scope="col">Imagen</th>
       <th scope="col">Product</th>
       <th scope="col">Quantity</th>
-      <th scope="col">price</th>
+      <th scope="col">Price</th>
       <th scope="col">Total</th>
       <th scope="col">Borrar</th>
     </tr>
@@ -111,7 +111,7 @@ if(isset($_SESSION["cart"])){
  </tr>';# code...
    }
    echo "<tr>
-   <td>Total</td><td>".$total."</td>
+   <td class='importe'>Total</td><td class='euros'>".$total."</td>
    </tr>"
    ?>
    

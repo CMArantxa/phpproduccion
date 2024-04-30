@@ -11,7 +11,7 @@ $resultados = $consulta->fetchAll(PDO::FETCH_ASSOC);
 //Compruebo si hay carrito
 if (isset($_SESSION["username"])) {
     //comprobaria si hay carrito en la bbdd
-    $username=$_SESSION["username"];
+    $user=$_SESSION["username"];
 }
     //compruebo si hay carrito en sesion
     if (isset($_SESSION["cart"])) {
