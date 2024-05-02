@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once("conexion.php");
+include_once("./models/product.php");
 
 $sql = "select * from product";
 $consulta = $conn->prepare($sql);
@@ -9,14 +10,41 @@ $consulta->execute();
 // Obtener los resultados
 $resultados = $consulta->fetchAll(PDO::FETCH_ASSOC);
 //Compruebo si hay carrito
+if (isset($_SESSION["cart"])) {
+    $cart = $_SESSION["cart"];
+}
+
 if (isset($_SESSION["username"])) {
     //comprobaria si hay carrito en la bbdd
-    $user=$_SESSION["username"];
+    $user = $_SESSION["username"];
+    $iduser = $_SESSION["iduser"];
+   // if (!isset($cart) || count($cart) == 0) {
+     //   try {
+            $sql = "select * from cart_detail where idcart=(select idcart from cart where iduser=? order by date desc limit 1)";
+            $stm = $conn->prepare($sql);
+            $stm->bindParam(1, $iduser);
+            $stm->execute();
+            $result = $stm->fetchAll(PDO::FETCH_ASSOC);
+            $cart = array();
+            foreach ($result as $key => $p) {
+                $_SESSION["idcart"] = $p["idcart"];
+                $product = new Product($p["idproduct"], $p["quantity"]);
+                array_push($cart, $product); 
+            }
+
+            $_SESSION["cart"] = $cart;
+            if(isset($_SESSION["idcart"])){
+                $idcart=$_SESSION["idcart"];
+            }
+
+            //$_SESSION["idcart"]=$result[0]["idcart"];
+  //      } catch (Exception $e) {
+     //       var_dump($e->getMessage());
+     //       exit();
+   //     }
+   // }
 }
-    //compruebo si hay carrito en sesion
-    if (isset($_SESSION["cart"])) {
-        $cart = $_SESSION["cart"];
-    }
+$idcart=isset($_SESSION["idcart"])?$_SESSION["idcart"]:"";
 
 ?>
 <!doctype html>
@@ -57,15 +85,14 @@ if (isset($_SESSION["username"])) {
                     </li>
 
                 </ul>
-                <span id="user"><?php if(isset($username)) echo $username;?></span>
+                <span id="user"><?php if (isset($user)) echo $user; ?></span>
             </div>
         </div>
     </nav>
     <div class="container contenedor-productos row">
         <div class="shop-cart" id="cart">
-
-            <a class="nav-link" href="cart.php"><span><i class="fas fa-shopping-cart"></i><?php echo isset($cart) ? count($cart) : ''; ?> </span></a>
-
+            <a class="nav-link" href="cart"><span><i class="fas fa-shopping-cart"></i><?php echo isset($cart) ? count($cart) : ''; ?> </span></a>
+            <?php echo isset($_SESSION["idcart"]) ? $_SESSION["idcart"] : "nada" ?>
         </div>
         <h3>Productos</h3>
 
@@ -86,6 +113,8 @@ if (isset($_SESSION["username"])) {
           </div>
           <form action="add_to_cart.php" method="get">
           <div class="add-to-cart">
+            <input type="hidden" name="idcart" value="' . $idcart . '">
+            <input type="hidden" name="price" value="' . $product["price"] . '">
             <input type="hidden" name="idproduct" value="' . $product["idproduct"] . '">
             <input min=1 step=1 class="form-control" type="number" name="quantity" id="" required >
             <button type="submit" class="btn btn-primary"><i class="fa-solid fa-cart-plus"></i></button>
@@ -96,32 +125,29 @@ if (isset($_SESSION["username"])) {
         }
         ?>
     </div>
-<div class="modal"  id="modal-login" tabindex="-1" role="dialog">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Login</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <form action="login.php" method="post">
-      <div class="modal-body">
-        <h5>Para continuar comprando hay que iniciar sesión</h5>
-            <hr>
-           
-            <input class="form-control email" type="email" name="email" id="" placeholder="email" required>
-            <input class="form-control" type="password" name="password" id="" placeholder="password" required>
-  
-      </div>
-      <div class="modal-footer">
-        <button type="submit" class="btn btn-primary">Log in</button>
-        <button type="submit" class="btn btn-secondary" data-dismiss="modal">Close</button>
-      </div>
-      </form>
+
+    <div class="modal" tabindex="-1" id="modal-login">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Login</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="login.php" method="post">
+                    <div class="modal-body">
+                        <h5>Para continuar comprando hay que inicial sesión</h5>
+                        <hr>
+                        <input class="form-control email" type="email" name="email" id="" placeholder="Email" required>
+                        <input class="form-control" placeholder="Password" type="password" name="password" id="" required>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Login</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
-  </div>
-</div>
 
     <!-- Optional JavaScript; choose one of the two! -->
 
@@ -134,7 +160,8 @@ if (isset($_SESSION["username"])) {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js" integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF" crossorigin="anonymous"></script>
     -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-    <script src="assets/js/product.js"></script>
+    <script src="./assets/js/product.js"></script>
+
 </body>
 
 </html>

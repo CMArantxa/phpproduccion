@@ -1,37 +1,65 @@
 <?php
 include_once("./models/product.php");
 session_start();
-if(isset($_SESSION["username"])){
-    $user=$_SESSION["username"];
-if(isset($_SESSION["cart"])){
-    //existe usuario y carrito en sesion
-    $user=$_SESSION["username"];
-    $cart=$_SESSION["cart"];
-    //consultamos informacion a bbdd
-    require_once("conexion.php");
-    foreach ($cart as $product) {
-        $sql="select * from product where idproduct=?";
-        $stm=$conn->prepare($sql);
-        $stm->bindParam(1,$product->idproduct);
-        $stm->execute();
-        if($stm->rowCount()>0){
-            $result=$stm->fetchAll(PDO::FETCH_ASSOC);
-            $product->name=$result[0]["name"];
-            $product->description=$result[0]["description"];
-            $product->price=$result[0]["price"];
-            $product->image=$result[0]["image"];
-
+if (isset($_SESSION["username"])) {
+    $user = $_SESSION["username"];
+    if (isset($_SESSION["cart"])) {
+        //Existe usuario y carrito en session
+        $user = $_SESSION["username"];
+        $cart = $_SESSION["cart"];
+        $iduser = $_SESSION["iduser"];
+        //Consultamos información de los productos a la bbdd
+        require_once("conexion.php");
+        foreach ($cart as $product) {
+            $sql = "select * from product where idproduct=?";
+            $stm = $conn->prepare($sql);
+            $stm->bindParam(1, $product->idproduct);
+            $stm->execute();
+            if ($stm->rowCount() > 0) {
+                $result = $stm->fetchAll(PDO::FETCH_ASSOC);
+                $product->name = $result[0]["name"];
+                $product->description = $result[0]["description"];
+                $product->price = $result[0]["price"];
+                $product->image = $result[0]["image"];
+            }
         }
-        # code...
+        if (isset($_SESSION["idcart"])) {
+            $idcart = $_SESSION["idcart"];
+        } else {
+            //Guardamos el carrito en bbdd
+            $sql = "insert into cart (iduser) value (?)";
+            $stm = $conn->prepare($sql);
+            $stm->bindParam(1, $iduser);
+            $stm->execute();
+            $idcart = $conn->lastInsertId();
+            $_SESSION["idcart"] = $idcart;
+        }
+        //Borramos la tabla cartdetail
+        $sql="delete from cart_detail where idcart=".$idcart;
+        $stm=$conn->prepare($sql);
+        $stm->execute();
+        //Insertamos los productos en cart_detail
+        foreach ($cart as $key => $product) {
+            $sql = "insert into cart_detail (idcart,idproduct,quantity,price) values (?,?,?,?)";
+            $stm = $conn->prepare($sql);
+            $stm->bindParam(1, $idcart);
+            $stm->bindParam(2, $product->idproduct);
+            $stm->bindParam(3, $product->quantity);
+            $stm->bindParam(4, $product->price);
+            $stm->execute();
+            $idcartdetail = $conn->lastInsertId();
+            $product->idcartdetail=$idcartdetail;
+        }
+    } else {
+        header("Location: ./");
+        exit();
     }
-}else{
-    header("Location:./");
+} else {
+    header("Location: ./");
     exit();
 }
-}else{
-    header("Location:./");
-    exit();
-}
+
+var_dump($cart);
 ?>
 <!doctype html>
 <html lang="en">
@@ -52,7 +80,7 @@ if(isset($_SESSION["cart"])){
 
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
-            <a class="navbar-brand" href="cart.php">Mi Tienda</a>
+            <a class="navbar-brand" href="#">Mi Tienda</a>
             <div>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
@@ -71,56 +99,63 @@ if(isset($_SESSION["cart"])){
                     </li>
 
                 </ul>
-                <span id="user"><?php if(isset($username)) echo $username;?></span>
+                <span id="user"><?php if (isset($user)) echo $user; ?></span>
             </div>
         </div>
     </nav>
     <div class="container contenedor-productos row">
         <div class="shop-cart" id="cart">
-
-            <a class="nav-link" href="cart.php"><span><i class="fas fa-shopping-cart"></i><?php echo isset($cart) ? count($cart) : ''; ?> </span></a>
-
+            <a class="nav-link" href="cart"><span><i class="fas fa-shopping-cart"></i><span id="products_count"><?php echo isset($cart) ? count($cart) : ''; ?></span> </span></a>
         </div>
         <h3>Carrito</h3>
         <div class="table-responsive">
-  <table class="table">
-  <thead>
-    <tr>
-      <th scope="col">ID</th>
-      <th scope="col">Imagen</th>
-      <th scope="col">Product</th>
-      <th scope="col">Quantity</th>
-      <th scope="col">Price</th>
-      <th scope="col">Total</th>
-      <th scope="col">Borrar</th>
-    </tr>
-  </thead>
-  <tbody>
-   <?php
-   $total=0;
-   foreach ($cart as $key => $product) {
-    $total+=$product->price*$product->quantity;
-   echo ' <tr>
-   <th scope="row">'.$key.'</th>
-   <td><img class="img-cart" src="assets/product/'.$product->image.'" alt=""></td>
-   <td><h6>'.$product->name.'</h6><p>'.$product->description.'</p></td>
-   <td><input type="number" name="" id="" value="'.$product->quantity.'"></td>
-   <td>'.$product->price.'</td>
-   <td>'.$product->price*$product->quantity.'</td>
-   <td>x</td>
- </tr>';# code...
-   }
-   echo "<tr>
-   <td class='importe'>Total</td><td class='euros'>".$total."</td>
-   </tr>"
-   ?>
-   
-  </tbody>
-</table>
-  </table>
-</div>
-       
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col"></th>
+                        <th scope="col"></th>
+                        <th scope="col">Product</th>
+                        <th scope="col">Quantity</th>
+                        <th scope="col">Price</th>
+                        <th scope="col">Total</th>
+                        <th scope="col"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    $total = 0;
+                    foreach ($cart as $key => $product) {
+                        $total += $product->price * $product->quantity;
+                        echo '<tr id="idcartdetail'.$product->idcartdetail.'">
+                            <th scope="row">' . $key . '</th>
+                            <td><img class="img-cart" src="assets/product/' . $product->image . '" alt="" srcset=""></td>
+                            <td>
+                                <h6>' . $product->name . '</h6>
+                                <p>' . $product->description . '</p>
+                            </td>
+                            <td><input class="quantity" type="number" name="" id="" value="' . $product->quantity . '"></td>
+                            <td>' . $product->price . ' €/kg</td>
+                            <td>' . $product->price * $product->quantity . ' €</td>
+                            <td><span class="delete" ><i class="fa-solid fa-x"></i></span></td>
+                        </tr>';
+                    }
+                    echo "<tr><td class='importe_total'  colspan='5'>Total:</td><td class='euros_total' id='euros_total' colspan='2'>" . $total . " €</td></tr>"
+
+                    ?>
+
+
+                </tbody>
+            </table>
+        </div>
+        <button class="btn btn-success" id="btnConfir" type="button">Order Confirm</button>
+        <div class="datos_envio" >
+            <span>Delivery date:</span><input type="date" name="" id="">
+            <hr>
+            <span>Delivery Address:</span>
+
+        </div>
     </div>
+
 
 
     <!-- Optional JavaScript; choose one of the two! -->
@@ -134,7 +169,8 @@ if(isset($_SESSION["cart"])){
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js" integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF" crossorigin="anonymous"></script>
     -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-    <script src="assets/js/product.js"></script>
+    <script src="./assets/js/product.js"></script>
+
 </body>
 
 </html>

@@ -17,20 +17,34 @@
 .contenedor-productos{
     margin: 0 auto;
 }
+.shop-cart{
+    text-align: right;
+}
+.shop-cart span{
+    border:1px solid blue;
+    padding: 5px;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    font-size: 30px;
+}
 .email{
-    margin-bottom: 8px;
+    margin-bottom: 10px;
 }
 #user{
-    color: aqua;
+    color: white;
 }
 .img-cart{
     width: 100px;
 }
-.importe{
-font-weight: bold;
-text-align: right;
+.importe_total{
+    text-align:right; 
+    font-weight:bold;
 }
-.euros{
+.euros_total{
+    text-align: center;
     font-weight: bold;
-    text-align: right;
+}
+#products_count{
+    border: none;
 }
