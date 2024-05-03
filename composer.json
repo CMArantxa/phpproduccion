@@ -1,5 +1,0 @@
-{
-    "require": {
-        "phpmailer": "^6.5"
-    }
-}
