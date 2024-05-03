@@ -8,8 +8,14 @@ if (isset($_SESSION["username"])) {
         $user = $_SESSION["username"];
         $cart = $_SESSION["cart"];
         $iduser = $_SESSION["iduser"];
-        //Consultamos información de los productos a la bbdd
+
         require_once("conexion.php");
+        //Consultamos las direcciones del usuario
+        $slq = "select * from address where iduser=" . $iduser;
+        $stm = $conn->prepare($slq);
+        $stm->execute();
+        $address = $stm->fetchAll(PDO::FETCH_ASSOC);
+        //Consultamos información de los productos a la bbdd
         foreach ($cart as $product) {
             $sql = "select * from product where idproduct=?";
             $stm = $conn->prepare($sql);
@@ -35,8 +41,8 @@ if (isset($_SESSION["username"])) {
             $_SESSION["idcart"] = $idcart;
         }
         //Borramos la tabla cartdetail
-        $sql="delete from cart_detail where idcart=".$idcart;
-        $stm=$conn->prepare($sql);
+        $sql = "delete from cart_detail where idcart=" . $idcart;
+        $stm = $conn->prepare($sql);
         $stm->execute();
         //Insertamos los productos en cart_detail
         foreach ($cart as $key => $product) {
@@ -48,7 +54,7 @@ if (isset($_SESSION["username"])) {
             $stm->bindParam(4, $product->price);
             $stm->execute();
             $idcartdetail = $conn->lastInsertId();
-            $product->idcartdetail=$idcartdetail;
+            $product->idcartdetail = $idcartdetail;
         }
     } else {
         header("Location: ./");
@@ -126,7 +132,7 @@ var_dump($cart);
                     $total = 0;
                     foreach ($cart as $key => $product) {
                         $total += $product->price * $product->quantity;
-                        echo '<tr id="idcartdetail'.$product->idcartdetail.'">
+                        echo '<tr id="idcartdetail' . $product->idcartdetail . '">
                             <th scope="row">' . $key . '</th>
                             <td><img class="img-cart" src="assets/product/' . $product->image . '" alt="" srcset=""></td>
                             <td>
@@ -148,11 +154,29 @@ var_dump($cart);
             </table>
         </div>
         <button class="btn btn-success" id="btnConfir" type="button">Order Confirm</button>
-        <div class="datos_envio" >
-            <span>Delivery date:</span><input type="date" name="" id="">
-            <hr>
-            <span>Delivery Address:</span>
+        <div class="datos_envio">
+            <form action="add_order" method="post">
+                <span>Delivery date:</span><input type="date" name="date" id="">
+                <hr>
+                <span>Delivery Address:</span>
+                <div class="address row">
+                    <?php
+                    foreach ($address as $key => $dir) {
+                        echo '<div class="col-md-3 col-sm-12">
+                    <input type="radio" name="address" value="' . $dir["idaddress"] . '" id="">
+                    <h5>' . $dir["street"] . '</h5>
+                    <p><span>' . $dir["zipcode"] . '</span>-<span>' . $dir["city"] . '</span></p>
+                    <p>' . $dir["country"] . '</p>
+                </div>';
+                    }
+                    ?>
 
+                </div>
+                <div>
+                    <a href="add_address"><i class="fa-solid fa-location-dot"></i><i class="fa-solid fa-plus"></i></a>
+                </div>
+                <input type="submit" value="Create Order" class="btn btn-success">
+            </form>
         </div>
     </div>
 
