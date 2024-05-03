@@ -1,5 +1,7 @@
 <?php
 session_start();
+var_dump($_SESSION);
+
 require_once("conexion.php");
 include_once("./models/product.php");
 
@@ -9,93 +11,50 @@ $consulta = $conn->prepare($sql);
 $consulta->execute();
 // Obtener los resultados
 $resultados = $consulta->fetchAll(PDO::FETCH_ASSOC);
-//Compruebo si hay carrito
-if (isset($_SESSION["cart"])) {
-    $cart = $_SESSION["cart"];
-}
 
 if (isset($_SESSION["username"])) {
     //comprobaria si hay carrito en la bbdd
     $user = $_SESSION["username"];
     $iduser = $_SESSION["iduser"];
-   // if (!isset($cart) || count($cart) == 0) {
-     //   try {
-            $sql = "select * from cart_detail where idcart=(select idcart from cart where iduser=? order by date desc limit 1)";
-            $stm = $conn->prepare($sql);
-            $stm->bindParam(1, $iduser);
-            $stm->execute();
-            $result = $stm->fetchAll(PDO::FETCH_ASSOC);
-            $cart = array();
-            foreach ($result as $key => $p) {
-                $_SESSION["idcart"] = $p["idcart"];
-                $product = new Product($p["idproduct"], $p["quantity"]);
-                array_push($cart, $product); 
-            }
+    $sql = "select C.idcart from cart C 
+    left join `order` O on C.idcart=O.idcart 
+    where iduser=? and O.idcart is null order by C.date desc limit 1";
+    $stm = $conn->prepare($sql);
+    $stm->bindParam(1, $iduser);
+    $stm->execute();
+    $result = $stm->fetchAll(PDO::FETCH_ASSOC);
+    var_dump($result);
+    if ($stm->rowCount() > 0) {
+        var_dump($result);
+        $idcart = $result[0]["idcart"];
+        //Consulto los articulos del carrito
+        $sql = "select * from cart_detail where idcart=?";
+        $stm = $conn->prepare($sql);
+        $stm->bindParam(1, $idcart);
+        $stm->execute();
+        $result = $stm->fetchAll(PDO::FETCH_ASSOC);
+        $cart = array();
+        foreach ($result as $key => $p) {
+            $product = new Product($p["idproduct"], $p["quantity"]);
+            array_push($cart, $product);
+        }
 
-            $_SESSION["cart"] = $cart;
-            if(isset($_SESSION["idcart"])){
-                $idcart=$_SESSION["idcart"];
-            }
-
-            //$_SESSION["idcart"]=$result[0]["idcart"];
-  //      } catch (Exception $e) {
-     //       var_dump($e->getMessage());
-     //       exit();
-   //     }
-   // }
+        $_SESSION["idcart"] = $idcart;
+        $_SESSION["cart"] = $cart;
+    }
+} else {
+    if (isset($_SESSION["cart"])) {
+        $cart = $_SESSION["cart"];
+    }
 }
-$idcart=isset($_SESSION["idcart"])?$_SESSION["idcart"]:"";
+
 
 ?>
-<!doctype html>
-<html lang="en">
-
-<head>
-    <!-- Required meta tags -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-    <link rel="stylesheet" href="assets/css/index.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <title>App Orders</title>
-</head>
-
-<body>
-
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="#">Mi Tienda</a>
-            <div>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-            </div>
-            <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                <ul class="navbar-nav ml-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="index.php">Inicio</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="index.php">Productos</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="login.php">Log In</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="contacto.php">Contacto</a>
-                    </li>
-
-                </ul>
-                <span id="user"><?php if (isset($user)) echo $user; ?></span>
-            </div>
-        </div>
-    </nav>
+<?php include("header.php"); ?>
     <div class="container contenedor-productos row">
         <div class="shop-cart" id="cart">
             <a class="nav-link" href="cart"><span><i class="fas fa-shopping-cart"></i><?php echo isset($cart) ? count($cart) : ''; ?> </span></a>
-            <?php echo isset($_SESSION["idcart"]) ? $_SESSION["idcart"] : "nada" ?>
+            <?php echo isset($idcart) ? $idcart : "nada" ?>
         </div>
         <h3>Productos</h3>
 
@@ -115,8 +74,8 @@ $idcart=isset($_SESSION["idcart"])?$_SESSION["idcart"]:"";
             </div>
           </div>
           <form action="add_to_cart.php" method="get">
-          <div class="add-to-cart">
-            <input type="hidden" name="idcart" value="' . $idcart . '">
+          <div class="add-to-cart">       
+         
             <input type="hidden" name="price" value="' . $product["price"] . '">
             <input type="hidden" name="idproduct" value="' . $product["idproduct"] . '">
             <input min=1 step=1 class="form-control" type="number" name="quantity" id="" required >
